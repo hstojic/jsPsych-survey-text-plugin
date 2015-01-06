@@ -44,37 +44,45 @@
                 // create div
                 display_element.append($('<div>', {
                     "id": 'jspsych-survey-text-body',
-                    "class": 'jspsych-survey-text-body'
+                    "class": 'jspsych-survey-text jspsych-survey-text-body'
                 }));
 
                 // add the text
                 $("#jspsych-survey-text-body").append(trial.instructions);
             }
             
+            if (trial.numbered) { 
+                display_element.append($('<ol>', {
+                "id": 'jspsych-survey-text-questions',
+                "class": 'jspsych-survey-text'
+            }));
+            } else {
+                display_element.append($('<ol>', {
+                "id": 'jspsych-survey-text-questions',
+                "class": 'list-unstyled'
+            }));
+            }
+            
             // add questions, depending on the type
             for (var i = 0; i < trial.noQuestions; i++) {
                 // create div
-                display_element.append($('<div>', {
+                $("#jspsych-survey-text-questions").append($('<li>', {
                     "id": 'jspsych-survey-text-' + i,
                     "class": 'jspsych-survey-text-question'
                 }));
 
+
                 // add question text
-                if (trial.numbered) { 
-                    var numbering = (i+1) + '. ';
-                } else {
-                    var numbering = "";
-                }
-                $("#jspsych-survey-text-" + i).append('<p class="jspsych-survey-text">'+ numbering + trial.questions[i].questText + '</p>');
+                $("#jspsych-survey-text-" + i).append('<p class="jspsych-survey-text">' + trial.questions[i].questText + '</p>');
 
                 // add text box     
                 if (trial.questions[i].questType[0] === "text") {
                     
                     // single or multiline
                     if (trial.questions[i].questType[1] === "single") {
-                        $("#jspsych-survey-text-" + i).append('<input type="text" name="#jspsych-survey-text-response-' + i + '"></input>');
+                        $("#jspsych-survey-text-" + i).append('<input type="text" class="form-control" name="#jspsych-survey-text-response-' + i + '"></input>');
                     } else if (trial.questions[i].questType[1] === "multi") {
-                        $("#jspsych-survey-text-" + i).append('<textarea cols="40" rows="5" name="#jspsych-survey-text-response-' + i + '"></textarea>');
+                        $("#jspsych-survey-text-" + i).append('<textarea class="form-control" rows="3" name="#jspsych-survey-text-response-' + i + '"></textarea>');
                     }
 
                 // multiple choice, radio, checkbox or dropdown
@@ -117,9 +125,20 @@
 
                 // create object to hold responses
                 var question_data = {};
-                $("div.jspsych-survey-text-question").each(function(index) {
+                $("ol.jspsych-survey-text-question").each(function(index) {
                     var id = "Q" + index;
-                    var val = $(this).children('input').val();
+
+                    // get input value if text box     
+                    if (trial.questions[i].questType[0] === "text") {
+                        // single or multiline
+                        if (trial.questions[i].questType[1] === "single") {
+                            var val = $(this).children('input').val();         
+                        } else if (trial.questions[i].questType[1] === "multi") {
+                            var val = $(this).children('textarea').val();
+                        }
+                    }
+                    console.log(val)
+                    //var val = $(this).children('input').val();
                     var obje = {};
                     obje[id] = val;
                     $.extend(question_data, obje);
