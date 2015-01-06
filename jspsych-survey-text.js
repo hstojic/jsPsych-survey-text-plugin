@@ -38,11 +38,15 @@
             // it with the output of the function
             trial = jsPsych.pluginAPI.normalizeTrialVariables(trial);
 
+            // add main div
+            display_element.append($('<div>', {
+                "id": 'jspsych-survey-text'
+            }));
 
             // add optional text above the questions
             if (trial.instructions) {
                 // create div
-                display_element.append($('<div>', {
+                $("#jspsych-survey-text").append($('<div>', {
                     "id": 'jspsych-survey-text-body',
                     "class": 'jspsych-survey-text-body'
                 }));
@@ -54,7 +58,7 @@
             // add questions, depending on the type
             for (var i = 0; i < trial.noQuestions; i++) {
                 // create div
-                display_element.append($('<div>', {
+                $("#jspsych-survey-text").append($('<div>', {
                     "id": 'jspsych-survey-text-' + i,
                     "class": 'jspsych-survey-text-question'
                 }));
@@ -84,28 +88,28 @@
                     if (trial.questions[i].questType[1]==="radio") {
                         // adding as many radio buttons as there are options
                         for (var j=0; j<trial.questions[i].questChoice.length; j++) {
-                            $("#jspsych-survey-text-" + i).append('<label class="radio-inline"><input type="radio" name="#jspsych-survey-text-response-' + i + '" value="option-' + j + '"></input>' + trial.questions[i].questChoice[j] + '</label>');
+                            $("#jspsych-survey-text-" + i).append('<label class="radio-inline"><input type="radio" name="radios_' + i + '" value="option_' + j + '"></input>' + trial.questions[i].questChoice[j] + '</label>');
                         }
                     
                     // checkboxes
                     } else if (trial.questions[i].questType[1]==="checkbox") {
                         for (var j=0; j<trial.questions[i].questChoice.length; j++) {
-                            $("#jspsych-survey-text-" + i).append('<label class="radio-inline"><input type="checkbox" name="#jspsych-survey-text-response-' + i + '" value="option-' + j + '"></input>' + trial.questions[i].questChoice[j] + '</label>');
+                            $("#jspsych-survey-text-" + i).append('<label class="checkbox-inline"><input type="checkbox" name="checkboxes_' + i + '" value="option_' + j + '"></input>' + trial.questions[i].questChoice[j] + '</label>');
                         }
 
                     // or dropdown
                     } else if (trial.questions[i].questType[1]==="dropdown") {
                         var choices = '';
                         for (var j=0; j<trial.questions[i].questChoice.length; j++) {
-                            choices = choices + '<option name="#jspsych-survey-text-response-' + i + '" value="option-' + j + '">' + trial.questions[i].questChoice[j] + '</option>';
+                            choices = choices + '<option value="option_' + j + '">' + trial.questions[i].questChoice[j] + '</option>';
                         }
-                        $("#jspsych-survey-text-" + i).append('<select>' + choices + '</select>');
+                        $("#jspsych-survey-text-" + i).append('<select id="#dropdown_' + i + '"><option value="void">Choose your answer</option>' + choices + '</select>');
                     }
                 }
             }
 
             // add submit button
-            display_element.append($('<button>', {
+            $("#jspsych-survey-text").append($('<button>', {
                 'id': 'jspsych-survey-text-next',
                 'class': 'jspsych-survey-text btn btn-default'
             }));
@@ -119,7 +123,50 @@
                 var question_data = {};
                 $("div.jspsych-survey-text-question").each(function(index) {
                     var id = "Q" + index;
-                    var val = $(this).children('input').val();
+
+                    // add text box     
+                    if (trial.questions[index].questType[0] === "text") {
+                        // single or multiline
+                        if (trial.questions[index].questType[1] === "single") {
+                            var val = $(this).children('input').val();
+                        } else if (trial.questions[index].questType[1] === "multi") {
+                            var val = $(this).children('textarea').val();
+                        }
+                    } else if (trial.questions[index].questType[0] === "multiple choice") {
+                    
+                        // radio buttons
+                        if (trial.questions[index].questType[1]==="radio") {
+                            // we loop over buttons until one is checked
+                            var radios = document.getElementsByName('radios_'+index);
+                            for (var i = 0, length = radios.length; i < length; i++) {
+                                if (radios[i].checked) {
+                                    var help = radios[i].value;
+                                    var idx = parseFloat(help.split("_")[1]);
+                                    var val = trial.questions[index].questChoice[idx];
+                                    break;
+                                }
+                            }
+                        
+                        // checkboxes
+                        } else if (trial.questions[index].questType[1]==="checkbox") {
+                            // we loop over buttons until one is checked
+                            var checkboxes = document.getElementsByName('checkboxes_'+index);
+                            var val = [];
+                            for (var i = 0, length = checkboxes.length; i < length; i++) {
+                                if (checkboxes[i].checked) {
+                                    var help = checkboxes[i].value;
+                                    var idx = parseFloat(help.split("_")[1]);
+                                    val.push(trial.questions[index].questChoice[idx]);
+                                }
+                            }
+
+                        // or dropdown
+                        } else if (trial.questions[index].questType[1]==="dropdown") {
+                            var e = document.getElementById("#dropdown_"+index);
+                            var val = e.options[e.selectedIndex].text;
+                        }
+                    }
+                    
                     var obje = {};
                     obje[id] = val;
                     $.extend(question_data, obje);
