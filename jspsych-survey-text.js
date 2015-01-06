@@ -25,6 +25,7 @@
                     noQuestions: Object.keys(params.questions[i]).length,
                     numbered: params.numbered[i],
                     questions: params.questions[i],
+                    check_fn: params.check_fn,
                     data: (typeof params.data === 'undefined') ? {} : params.data[i]
                 });
             }
@@ -36,7 +37,7 @@
             // if any trial variables are functions
             // this evaluates the function and replaces
             // it with the output of the function
-            trial = jsPsych.pluginAPI.normalizeTrialVariables(trial);
+            trial = jsPsych.pluginAPI.normalizeTrialVariables(trial, ["check_fn"]);
 
             // add main div
             display_element.append($('<div>', {
@@ -171,6 +172,8 @@
                     obje[id] = val;
                     $.extend(question_data, obje);
                 });
+                
+                if (trial.check_fn && !trial.check_fn(display_element, question_data)) return;
 
                 // save data
                 block.writeData($.extend({}, {
